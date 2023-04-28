@@ -1,0 +1,1 @@
+stylegan2_pytorch --data /celebA --name FaceMorphing  --results_dir /results --models_dir /weights --image-size 256 --attn-layers [1,2,3]  --gradient-accumulate-every 2
