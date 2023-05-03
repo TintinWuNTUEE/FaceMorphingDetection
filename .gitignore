@@ -7,7 +7,6 @@
 */*jpg
 *png
 */*png
-*.txt
 datasets/
 CelebA/
 # Byte-compiled / optimized / DLL files
