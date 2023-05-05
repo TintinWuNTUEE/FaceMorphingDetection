@@ -1,11 +1,31 @@
 import os
+import torch
 from torch import Generator as G
 from torch.utils.data import Dataset, DataLoader, random_split
 import torchvision.transforms.v2 as T
 from PIL import Image
+from common.configs import get_cfg_defaults
+from data.data import FaceDataset, FaceSubset
 
 
-def get_loader(image_dir, batch_size=16, num_workers=8):
+def kfold(cfg, train_data, i):
+    k_fold = cfg.train.k_folds
+    total_size = len(train_data)
+    val_indices = []
+    train_indices = []
+    for t in range(total_size):
+        if t % k_fold == i:
+            val_indices.append(t)
+        else:
+            train_indices.append(t)
+    print(k_fold, i, len(val_indices), len(train_indices))
+    val_set = torch.utils.data.dataset.Subset(train_data, val_indices)
+    train_set = torch.utils.data.dataset.Subset(train_data, train_indices)
+
+    return val_set, train_set
+
+
+def get_loader(image_dir, val_num, batch_size=16, num_workers=8):
     """Build and return a data loader."""
     train_transform, test_transform = get_transform()
     dataset = FaceDataset(image_dir)
@@ -19,14 +39,18 @@ def get_loader(image_dir, batch_size=16, num_workers=8):
     train_data, test_data = FaceSubset(train_data, train_transform), FaceSubset(
         test_data, test_transform
     )
-    # K_Folds(train_data)
+    val_set, train_set = kfold(cfg, train_data, val_num)
+
     train_loader = DataLoader(
-        dataset=train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers
+        dataset=train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers
     )
     test_loader = DataLoader(
         dataset=test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers
     )
-    return train_loader, test_loader
+    val_loader = DataLoader(
+        dataset=val_set, batch_size=batch_size, shuffle=False, num_workers=num_workers
+    )
+    return train_loader, test_loader, val_loader
 
 
 def get_transform():
@@ -84,7 +108,6 @@ class FaceDataset(Dataset):
     def __getitem__(self, index):
         file = self.filenames[index]
         img = Image.open(file)
-
         label = self.get_label(file)
         return img, label
 
@@ -109,12 +132,21 @@ class FaceSubset(FaceDataset):
 
 
 if __name__ == "__main__":
-    image_dir = "../img_align_celeba"
-    train_loader, test_loader = get_loader(image_dir=image_dir, num_workers=0)
+    cfg = get_cfg_defaults()
+    image_dir = "./data/img_align_celeba"
+    val_num = 1
+    train_loader, test_loader, val_loader = get_loader(
+        image_dir, val_num, num_workers=0
+    )
     dataiter = iter(train_loader)
-    data = next(dataiter)
-    images, label = data
+    train_data = next(dataiter)
+    train_images, train_label = train_data
 
-    print("Image tensor in each batch:", images.shape, images.dtype)
+    dataiter = iter(val_loader)
+    val_data = next(dataiter)
+    val_images, val_label = val_data
 
-    print("Label tensor in each batch:", label.shape, label.dtype)
+    print("Image tensor in each batch:", train_images.shape, train_images.dtype)
+    print("Label tensor in each batch:", train_label.shape, train_label.dtype)
+    print("Image tensor in each batch:", val_images.shape, val_images.dtype)
+    print("Label tensor in each batch:", val_label.shape, val_label.dtype)
