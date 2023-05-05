@@ -85,7 +85,7 @@ def validation(model,val_loader,logger):
     with torch.no_grad():
         for data, label in val_loader:
             data,label= data.to(device), label.to(device,dtype=torch.float)
-            with torch.autocast(device_type='cuda',dtype=torch.float16,enabled=True,cache_enabled=True):
+            with torch.autocast(device_type=device,dtype=torch.float16,enabled=True,cache_enabled=True):
                 output = model(data).squeeze()
                 loss = criterion(output,label)
             output = torch.sigmoid(output)
