@@ -46,7 +46,7 @@ def train(model,logger,cfg,log_interval=200,val_interval = 5,model_name='swin'):
         for batch_idx, (data, label) in enumerate(train_loader):
             data,label= data.to(device), label.to(device,dtype=torch.float)
             optimizer.zero_grad()
-            with torch.autocast(device_type='cuda',dtype=torch.float16,enabled=True,cache_enabled=True):
+            with torch.autocast(device_type=device,dtype=torch.float16,enabled=True,cache_enabled=True):
                 output = model(data).squeeze()
                 loss = criterion(output,label)
             
@@ -103,8 +103,11 @@ def main():
     cfg.freeze()
     torch.backends.cudnn.benchmark=True
     model = get_model()
-    logger = get_logger(cfg.log.path, cfg.log.name)
+    logger = get_logger(cfg.logger.path, cfg.logger.name)
     logger.info('============ Training routine: "%s" ============\n')
     train(model,logger,cfg)
     logger.info('=> ============ Network trained - all epochs passed... ============')
     exit()
+
+if __name__ == "__main__":
+    main()

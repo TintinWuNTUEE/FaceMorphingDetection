@@ -2,7 +2,7 @@ import torch.optim as optim
 
 def build_optimizer(cfg, model):
   lr  = cfg.optimizer.base_lr
-  decay = cfg.opimizer.weight_decay
+  decay = cfg.optimizer.weight_decay
   betas = cfg.optimizer.betas
   optimizer = optim.AdamW(model.parameters(),eps=1e-6,
                                            lr=lr,weight_decay=decay,
