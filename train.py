@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from data.data import get_loader
+from data import get_loader
 from common.utils import get_device
 from common.logger import get_logger
 from common.optimizer import build_optimizer,build_scheduler

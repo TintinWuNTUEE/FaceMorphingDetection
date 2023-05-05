@@ -1,26 +1,17 @@
-<<<<<<< HEAD:data.py
 import os 
 import torch
-=======
 import os
->>>>>>> main:data/data.py
 from torch import Generator as G
 from torch.utils.data import Dataset, DataLoader, random_split
 import torchvision.transforms.v2 as T
 from PIL import Image
 from sklearn.model_selection import KFold
 
-<<<<<<< HEAD:data.py
 def get_loader(cfg,image_dir,batch_size=16, num_workers=8,kf=0):
-=======
-
-def get_loader(image_dir, batch_size=16, num_workers=8):
->>>>>>> main:data/data.py
     """Build and return a data loader."""
     train_transform, test_transform = get_transform()
     dataset = FaceDataset(image_dir)
     P = 0.8
-<<<<<<< HEAD:data.py
     lengths = [int(len(dataset)*P), len(dataset)-int(len(dataset)*P)]
     
     train_data,test_data = random_split(dataset,lengths,generator=G().manual_seed(666))
@@ -42,26 +33,6 @@ def get_loader(image_dir, batch_size=16, num_workers=8):
                         batch_size=batch_size,
                         num_workers=num_workers)
     return train_loader,val_loader,test_loader
-=======
-    lengths = [int(len(dataset) * P), len(dataset) - int(len(dataset) * P)]
-
-    train_data, test_data = random_split(
-        dataset, lengths, generator=G().manual_seed(666)
-    )
-
-    train_data, test_data = FaceSubset(train_data, train_transform), FaceSubset(
-        test_data, test_transform
-    )
-    # K_Folds(train_data)
-    train_loader = DataLoader(
-        dataset=train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers
-    )
-    test_loader = DataLoader(
-        dataset=test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers
-    )
-    return train_loader, test_loader
-
->>>>>>> main:data/data.py
 
 def get_transform():
     train_transform = []
@@ -147,20 +118,12 @@ class FaceSubset(FaceDataset):
 
     def __len__(self):
         return len(self.subset)
-<<<<<<< HEAD:data.py
     
 if __name__ =="__main__":
     image_dir = "./img_align_celeba"
     from common.configs import get_cfg_defaults
     cfg = get_cfg_defaults()
     train_loader,val_loader,test_loader = get_loader(cfg,image_dir=image_dir,num_workers=0)
-=======
-
-
-if __name__ == "__main__":
-    image_dir = "../img_align_celeba"
-    train_loader, test_loader = get_loader(image_dir=image_dir, num_workers=0)
->>>>>>> main:data/data.py
     dataiter = iter(train_loader)
     data = next(dataiter)
     images, label = data
