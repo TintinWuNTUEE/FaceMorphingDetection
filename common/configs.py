@@ -1,11 +1,10 @@
 from yacs.config import CfgNode as CN
 
 __C = CN()
-__C.epoch = 50
 # model configs
 __C.model = CN()
 __C.model.path = './weights'
-__C.model.path = './best'
+__C.model.best = './best'
 # dataset configs
 __C.dataset = CN()
 __C.dataset.batch_size = 128
@@ -27,5 +26,11 @@ __C.logger = CN()
 __C.logger.path = 'logs'
 __C.logger.name = 'train_log.log'
 
+# training configs
+__C.train = CN()
+__C.train.epochs = 50
+__C.train.k_folds = 5
+
+
 def get_cfg_defaults():
-    return __C.clone
+    return __C.clone()

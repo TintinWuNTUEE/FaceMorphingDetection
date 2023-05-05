@@ -36,7 +36,7 @@ def train(model,logger,cfg,log_interval=200,val_interval = 5,model_name='swin'):
     acc = 0
     iteration = 0
     best_acc = 0
-    max_epoch =cfg.epoch
+    max_epoch =cfg.train.epochs
     patience = 5
     last_loss = 1000
     trigger_times = 0
@@ -77,7 +77,7 @@ def train(model,logger,cfg,log_interval=200,val_interval = 5,model_name='swin'):
         if acc>best_acc:
             best_acc = acc
             logger.info(f'saving model with acc: {acc}')
-            save_checkpoint(cfg.model.path,model,optimizer,ep,scheduler,scaler)
+            save_checkpoint(cfg.model.best,model,optimizer,ep,scheduler,scaler)
 def validation(model,val_loader,logger):
     criterion = nn.BCEWithLogitsLoss()
     test_loss = 0

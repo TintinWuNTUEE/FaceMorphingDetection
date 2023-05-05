@@ -1,4 +1,4 @@
-torch
-torchvision
+torch>=1.13.1
+torchvision>=0.14
 yacs
-unet-stylegan2
+stylegan2-pytorch

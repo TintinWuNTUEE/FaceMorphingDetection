@@ -25,14 +25,16 @@ def get_loader(image_dir,batch_size=16, num_workers=8):
 
 def get_transform():
     train_transform=[]
-    train_transform.append(T.Resize((256,256)))
+    train_transform.append(T.Resize((260,260),interpolation=T.InterpolationMode.BICUBIC))
+    train_transform.append(T.CenterCrop((256,256)))
     train_transform.append(T.RandAugment(interpolation=T.InterpolationMode.BICUBIC))
     train_transform.append(T.ToTensor())
     train_transform.append(T.Normalize(mean=[0.485, 0.456, 0.406] ,std=[0.229, 0.224, 0.225]))
     train_transform = T.Compose(train_transform)
 
     test_transform = []
-    test_transform.append(T.Resize((256,256)))
+    test_transform.append(T.Resize((260,260),interpolation=T.InterpolationMode.BICUBIC))
+    test_transform.append(T.CenterCrop((256,256)))
     test_transform.append(T.ToTensor())
     test_transform.append(T.Normalize(mean=[0.485, 0.456, 0.406] ,std=[0.229, 0.224, 0.225]))
     return train_transform,test_transform
