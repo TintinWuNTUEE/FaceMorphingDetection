@@ -30,27 +30,33 @@ def load_model(model,path):
         model.load_state_dict(checkpoint['model'])
     return model
 
-def load_checkpoint(model, optimizer, scheduler,scaler, path, logger):
+def load_checkpoint(model, optimizer, scheduler,scaler, path, logger,kf):
     '''
     Load checkpoint file
     '''
 
     if os.listdir(path):
-        file_path = sorted(glob(os.path.join(path, '*.pth')))[0]
+        try:
+          file_path = sorted(glob(os.path.join(path, f'model_{kf}*.pth')))[0]
+        except:
+          logger.info('=> No checkpoint. Initializing model from scratch')
+          epoch = 1
+          return model, optimizer, scheduler,scaler, epoch
         checkpoint = torch.load(file_path, map_location='cpu')
         model.load_state_dict(checkpoint['model'])
         epoch = checkpoint.pop('startEpoch')
+        kf = checkpoint.pop('kf')
         optimizer.load_state_dict(checkpoint.pop('optimizer'))
         scheduler.load_state_dict(checkpoint.pop('scheduler'))
         scaler.load_state_dict(checkpoint["scaler"])
         logger.info('=> Continuing training routine. Checkpoint loaded at {}'.format(file_path))
-        return model, optimizer, scheduler,scaler, epoch
+        return model, optimizer, scheduler,scaler, epoch,kf
     else:
         logger.info('=> No checkpoint. Initializing model from scratch')
         epoch = 1
     return model, optimizer, scheduler,scaler, epoch
 
-def save_checkpoint(path,model,optimizer,epoch,scheduler,scaler):
+def save_checkpoint(path,model,optimizer,epoch,scheduler,scaler,kf):
     '''
     Save checkpoint file
     '''
@@ -59,14 +65,14 @@ def save_checkpoint(path,model,optimizer,epoch,scheduler,scaler):
     _remove_recursively(path)
     _create_directory(path)
 
-    weights_fpath = os.path.join(path, 'epoch_{}.pth'.format(str(epoch).zfill(3)))
+    weights_fpath = os.path.join(path, 'model_{}_epoch_{}.pth'.format(kf,str(epoch).zfill(3)))
 
     torch.save({
     'startEpoch': epoch+1,  # To start on next epoch when loading the dict...
     'model': model.state_dict(),
     'optimizer': optimizer.state_dict(),
     'scheduler': scheduler.state_dict(),
-    "scaler": scaler.state_dict()
+    "scaler": scaler.state_dict(),
   }, weights_fpath)
 
     return weights_fpath

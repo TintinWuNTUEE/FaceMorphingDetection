@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import torchvision.transforms.v2 as T
 from PIL import Image
 from common.configs import get_cfg_defaults
-from data.data import FaceDataset, FaceSubset
+from data import FaceDataset, FaceSubset
 
 
 def kfold(cfg, train_data, i):
