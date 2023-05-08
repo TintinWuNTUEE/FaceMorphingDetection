@@ -1,6 +1,8 @@
+import os
+
 import torch
 from torch import nn
-from data import get_loader
+from data import get_train_val_loader, get_test_loader, split_dataset
 from common.utils import get_device
 from common.logger import get_logger
 from common.optimizer import build_optimizer,build_scheduler
@@ -8,7 +10,7 @@ from common.checkpoint import load_checkpoint,save_checkpoint
 from common.configs import get_cfg_defaults
 from model.model import get_model
 device = get_device()
-def train(model,logger,cfg,log_interval=200,val_interval = 5,model_name='swin'):
+def train(model,logger,cfg, train_set, val_set, log_interval=200,val_interval = 5,model_name='swin'):
     #training
     criterion = nn.BCEWithLogitsLoss()
     acc = 0
@@ -32,8 +34,8 @@ def train(model,logger,cfg,log_interval=200,val_interval = 5,model_name='swin'):
         scheduler = build_scheduler(cfg,optimizer)
         scaler = torch.cuda.amp.GradScaler() 
         #get dataset(data.py)
-        train_loader,val_loader,test_loader = get_loader(
-        cfg.dataset.path,
+        train_loader,val_loader = get_train_val_loader(
+        train_set, val_set,
         batch_size=cfg.dataset.batch_size,num_workers=cfg.dataset.num_workers,kf=kf)
         #load checkpoint
         model=model.to(device)
@@ -99,17 +101,55 @@ def validation(model,val_loader,logger):
         logger.info('Validation: Average Loss: {:.6f}, Accuracy:{}/{}({:.0f}%)\n'.format(
             test_loss/len(val_loader.dataset), correct, len(val_loader.dataset),
         100. * acc))
-    return test_loss,acc
+    return test_loss,acc   # Why not return average loss?
+
+
+def bagging(model, cfg, test_set, logger):
+    criterion = nn.BCEWithLogitsLoss()
+    test_loss = 0
+    correct = 0
+    test_loader = get_test_loader(test_set)
+    with torch.no_grad():
+        for data, label in test_loader:
+            ensemble_outputs = torch.tensor([])
+            for ckpt_path in os.listdir(cfg.model.path):
+                model.load_state_dict(torch.load(os.path.join(cfg.model.path, ckpt_path)['model']))
+                data,label= data.to(device), label.to(device,dtype=torch.float)
+                with torch.autocast(device_type=device,dtype=torch.float16,enabled=True,cache_enabled=True):
+                    output = model(data).squeeze()
+                    ensemble_outputs = torch.cat((ensemble_outputs, output), dim=0)
+                
+            ensemble_output = torch.mean(ensemble_outputs, dim=0)
+            loss = criterion(ensemble_output, label)
+            test_loss += loss.item() 
+            
+            ensemble_output = torch.sigmoid(ensemble_output)
+            pred = torch.gt(ensemble_output, 0.5).long().detach()
+            correct += torch.sum(label == pred)
+            test_loss += loss.item() 
+
+        avg_test_loss = test_loss / len(test_loader)
+        acc = correct / len(test_loader)
+        
+        logger.info('Inference: Average Loss: {:.6f}, Accuracy:{}/{}({:.0f}%)\n'.format(
+            avg_test_loss, correct, len(test_loader.dataset), 100. * acc))
+        
+    return avg_test_loss, acc
 
 def main():
     cfg = get_cfg_defaults()
     cfg.freeze()
     torch.backends.cudnn.benchmark=True
     model = get_model()
+    train_set, val_set, test_set = split_dataset(cfg.dataset.path)
+    
     logger = get_logger(cfg.logger.path, cfg.logger.name)
     logger.info('============ Training routine: "%s" ============\n')
-    train(model,logger,cfg)
+    train(model,logger,cfg, train_set, val_set)
     logger.info('=> ============ Network trained - all epochs passed... ============')
+    
+    # Inference
+    bagging(model, cfg, test_set, logger)
     exit()
 
 if __name__ == "__main__":
