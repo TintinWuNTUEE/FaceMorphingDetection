@@ -7,15 +7,62 @@ import torchvision.transforms.v2 as T
 from PIL import Image
 from sklearn.model_selection import KFold
 
-def get_loader(cfg,image_dir,batch_size=16, num_workers=8,kf=0):
-    """Build and return a data loader."""
+def split_dataset(image_dir):
     train_transform, test_transform = get_transform()
     dataset = FaceDataset(image_dir)
     P = 0.8
     lengths = [int(len(dataset)*P), len(dataset)-int(len(dataset)*P)]
     
     train_data,test_data = random_split(dataset,lengths,generator=G().manual_seed(666))
-    train_data,test_data = FaceSubset(train_data,train_transform), FaceSubset(test_data,test_transform)
+    # train_data,test_data = FaceSubset(train_data,train_transform), FaceSubset(test_data,test_transform)
+    train_set = FaceSubset(train_data,train_transform)
+    val_set = FaceSubset(train_data,test_transform)
+    test_set = FaceSubset(test_data,test_transform)
+    
+    return train_set, val_set, test_set
+
+
+def get_train_val_loader(train_set, val_set, batch_size=16, num_workers=8, kf=0):
+    train_ids,val_ids = get_k_fold(train_set,kf)
+    train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
+    val_subsampler = torch.utils.data.SubsetRandomSampler(val_ids)
+    
+    # Define data loaders for training and testing data in this fold
+    train_loader = DataLoader(
+                      dataset = train_set, 
+                      batch_size=batch_size,sampler=train_subsampler,num_workers=num_workers)
+    val_loader = DataLoader(
+                      dataset = val_set,
+                      batch_size=1, sampler=val_subsampler,num_workers=num_workers)
+    
+    return train_loader, val_loader
+
+
+def get_test_loader(test_set, batch_size=16, num_workers=8):
+   
+    # Define data loaders for training and testing data in this fold
+    test_loader = DataLoader(
+                        dataset=test_set,
+                        batch_size=batch_size,
+                        num_workers=num_workers)
+    
+    return test_loader
+
+
+"""
+def get_loader(cfg,image_dir,batch_size=16, num_workers=8,kf=0):
+    # Build and return a data loader.
+    
+    train_transform, test_transform = get_transform()
+    dataset = FaceDataset(image_dir)
+    P = 0.8
+    lengths = [int(len(dataset)*P), len(dataset)-int(len(dataset)*P)]
+    
+    train_data,test_data = random_split(dataset,lengths,generator=G().manual_seed(666))
+    # train_data,test_data = FaceSubset(train_data,train_transform), FaceSubset(test_data,test_transform)
+    train_set = FaceSubset(train_data,train_transform)
+    val_set = FaceSubset(train_data,test_transform)
+    test_set = FaceSubset(test_data,test_transform)
     
     train_ids,val_ids = get_k_fold(train_data,kf)
     train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
@@ -23,16 +70,17 @@ def get_loader(cfg,image_dir,batch_size=16, num_workers=8,kf=0):
     
     # Define data loaders for training and testing data in this fold
     train_loader = DataLoader(
-                      dataset = train_data, 
+                      dataset = train_set, 
                       batch_size=batch_size,sampler=train_subsampler,num_workers=num_workers)
     val_loader = DataLoader(
-                      dataset = train_data,
+                      dataset = val_set,
                       batch_size=1, sampler=val_subsampler,num_workers=num_workers)
     test_loader = DataLoader(
-                        dataset=test_data,
+                        dataset=test_set,
                         batch_size=batch_size,
                         num_workers=num_workers)
     return train_loader,val_loader,test_loader
+"""
 
 def get_transform():
     train_transform = []
