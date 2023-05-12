@@ -2,14 +2,14 @@ import torch
 import os 
 from glob import glob
 
-def _remove_recursively(folder_path):
+def _remove_recursively(folder_path,model_name):
   '''
   Remove directory recursively
   '''
   if os.path.isdir(folder_path):
-    filelist = [f for f in os.listdir(folder_path)]
+    filelist = [f for f in glob(os.path.join(folder_path,model_name))]
     for f in filelist:
-      os.remove(os.path.join(folder_path, f))
+      os.remove(f)
   return
 def _create_directory(directory):
   '''
@@ -62,7 +62,7 @@ def save_checkpoint(path,model,optimizer,epoch,scheduler,scaler,kf):
     '''
 
   # Remove recursively if epoch_last folder exists and create new one
-    _remove_recursively(path)
+    _remove_recursively(path,f'model_{kf}*')
     _create_directory(path)
 
     weights_fpath = os.path.join(path, 'model_{}_epoch_{}.pth'.format(kf,str(epoch).zfill(3)))
