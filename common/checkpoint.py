@@ -46,8 +46,8 @@ def load_checkpoint(model, optimizer, scheduler,scaler, path, logger,kf):
         model.load_state_dict(checkpoint['model'])
         epoch = checkpoint.pop('startEpoch')
         kf = checkpoint.pop('kf')
-        optimizer.load_state_dict(checkpoint.pop('optimizer'))
-        scheduler.load_state_dict(checkpoint.pop('scheduler'))
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
         scaler.load_state_dict(checkpoint["scaler"])
         logger.info('=> Continuing training routine. Checkpoint loaded at {}'.format(file_path))
         return model, optimizer, scheduler,scaler, epoch,kf
