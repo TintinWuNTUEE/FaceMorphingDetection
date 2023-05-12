@@ -1,4 +1,4 @@
-import os 
+import os
 import torch
 import os
 from torch import Generator as G
@@ -67,7 +67,7 @@ def get_loader(cfg,image_dir,batch_size=16, num_workers=8,kf=0):
     train_ids,val_ids = get_k_fold(train_data,kf)
     train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
     val_subsampler = torch.utils.data.SubsetRandomSampler(val_ids)
-    
+
     # Define data loaders for training and testing data in this fold
     train_loader = DataLoader(
                       dataset = train_set, 
@@ -81,6 +81,7 @@ def get_loader(cfg,image_dir,batch_size=16, num_workers=8,kf=0):
                         num_workers=num_workers)
     return train_loader,val_loader,test_loader
 """
+
 
 def get_transform():
     train_transform = []
@@ -106,13 +107,16 @@ def get_transform():
     )
     return train_transform, test_transform
 
-def get_k_fold(train_set,kf):
+
+def get_k_fold(train_set, kf):
     kfold = KFold(5)
-    print(len(train_set))
-    print(kf)
-    train_ids,test_ids= [(train_ids, test_ids) for i, (train_ids, test_ids) in enumerate(kfold.split(train_set)) if i == kf][0]
-    return train_ids,test_ids
-    
+    train_ids, test_ids = [
+        (train_ids, test_ids)
+        for i, (train_ids, test_ids) in enumerate(kfold.split(train_set))
+        if i == kf
+    ][0]
+    return train_ids, test_ids
+
 
 class FaceDataset(Dataset):
     """
@@ -166,12 +170,16 @@ class FaceSubset(FaceDataset):
 
     def __len__(self):
         return len(self.subset)
-    
-if __name__ =="__main__":
+
+
+if __name__ == "__main__":
     image_dir = "./img_align_celeba"
     from common.configs import get_cfg_defaults
+
     cfg = get_cfg_defaults()
-    train_loader,val_loader,test_loader = get_loader(cfg,image_dir=image_dir,num_workers=0)
+    train_loader, val_loader, test_loader = get_loader(
+        cfg, image_dir=image_dir, num_workers=0
+    )
     dataiter = iter(train_loader)
     data = next(dataiter)
     images, label = data

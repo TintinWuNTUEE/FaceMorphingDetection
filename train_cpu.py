@@ -3,8 +3,8 @@ from torch import nn
 from data import get_loader
 from common.utils import get_device
 from common.logger import get_logger
-from common.optimizer import build_optimizer,build_scheduler
-from common.checkpoint import load_checkpoint,save_checkpoint
+from common.optimizer import build_optimizer, build_scheduler
+from common.checkpoint import load_checkpoint, save_checkpoint
 from common.configs import get_cfg_defaults
 from model.model import get_model
 device = 'cpu'
@@ -14,7 +14,7 @@ def train(logger,cfg,log_interval=200,val_interval = 5,model_name='swin'):
     acc = 0
     iteration = 0
     best_acc = 0
-    max_epoch =cfg.train.epochs
+    max_epoch = cfg.train.epochs
     patience = 5
     last_loss = 1000
     trigger_times = 0
@@ -85,18 +85,24 @@ def validation(model,val_loader,logger):
     correct = 0
     with torch.no_grad():
         for data, label in val_loader:
-            data,label= data.to(device), label.to(device,dtype=torch.float)
+            data, label = data.to(device), label.to(device, dtype=torch.float)
             output = model(data).squeeze()
-            loss = criterion(output,label)
+            loss = criterion(output, label)
             output = torch.sigmoid(output)
             pred = torch.gt(output, 0.5).long().detach()
             correct += torch.sum(label == pred)
-            test_loss += loss.item() 
+            test_loss += loss.item()
         acc = correct / len(val_loader.dataset)
-        logger.info('Validation: Average Loss: {:.6f}, Accuracy:{}/{}({:.0f}%)\n'.format(
-            test_loss/len(val_loader.dataset), correct, len(val_loader.dataset),
-        100. * acc))
-    return test_loss,acc
+        logger.info(
+            "Validation: Average Loss: {:.6f}, Accuracy:{}/{}({:.0f}%)\n".format(
+                test_loss / len(val_loader.dataset),
+                correct,
+                len(val_loader.dataset),
+                100.0 * acc,
+            )
+        )
+    return test_loss, acc
+
 
 def main():
     cfg = get_cfg_defaults()
@@ -107,6 +113,7 @@ def main():
     train(logger,cfg)
     logger.info('=> ============ Network trained - all epochs passed... ============')
     exit()
+
 
 if __name__ == "__main__":
     main()
