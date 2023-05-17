@@ -137,7 +137,6 @@ def validate_single(data_pack, model, test_loss, correct):
 
 
 def validation(model, val_loader, logger):
-    criterion = nn.BCEWithLogitsLoss()
     test_loss = 0
     correct = 0
     with torch.no_grad():
@@ -158,7 +157,6 @@ def validation(model, val_loader, logger):
 
 
 def bagging(model, cfg, test_set, logger):
-    criterion = nn.BCEWithLogitsLoss()
     test_loss = 0
     correct = 0
     test_loader = get_test_loader(test_set)
